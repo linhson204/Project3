@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tối ưu hóa Phân vùng Giao hàng</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 1.1em;
+        opacity: 0.9;
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 0;
+      }
+
+      .sidebar {
+        background: #f8f9fa;
+        padding: 30px;
+        border-right: 2px solid #e9ecef;
+      }
+
+      .main-content {
+        padding: 30px;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #333;
+        font-size: 0.95em;
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1em;
+        transition: all 0.3s;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .btn {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        margin-top: 10px;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 40px;
+      }
+
+      .loading.active {
+        display: block;
+      }
+
+      .loading-secondary {
+        display: none;
+        text-align: center;
+        padding: 30px;
+        margin: 20px 0;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border: 2px dashed #667eea;
+      }
+
+      .loading-secondary.active {
+        display: block;
+      }
+
+      .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .results {
+        display: none;
+      }
+
+      .results.active {
+        display: block;
+      }
+
+      .result-header {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        border-left: 5px solid #667eea;
+      }
+
+      .result-header h2 {
+        color: #333;
+        margin-bottom: 15px;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+      }
+
+      .metric {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+      }
+
+      .metric-label {
+        font-size: 0.85em;
+        color: #6c757d;
+        margin-bottom: 5px;
+      }
+
+      .metric-value {
+        font-size: 1.5em;
+        font-weight: 700;
+        color: #667eea;
+      }
+
+      .plot-container {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .plot-container img {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+      }
+
+      .table-container {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      th {
+        padding: 15px 10px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.9em;
+      }
+
+      td {
+        padding: 12px 10px;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      tbody tr:hover {
+        background: #f8f9fa;
+      }
+
+      .overtime {
+        color: #dc3545;
+        font-weight: 600;
+      }
+
+      .ok {
+        color: #28a745;
+      }
+
+      .summary-row {
+        background: #f8f9fa;
+        font-weight: 600;
+        border-top: 3px solid #667eea;
+      }
+
+      .info-box {
+        background: #e7f3ff;
+        border-left: 4px solid #2196f3;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+      }
+
+      .info-box p {
+        margin: 5px 0;
+        color: #333;
+      }
+
+      .comparison-container {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+
+      .solution-column {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        max-width: 100%;
+      }
+
+      .solution-column.initial {
+        border-color: #dc3545;
+      }
+
+      .solution-column.optimized {
+        border-color: #28a745;
+      }
+
+      .solution-header {
+        padding: 15px 20px;
+        color: white;
+        text-align: center;
+        font-weight: 600;
+        font-size: 1.1em;
+      }
+
+      .solution-column.initial .solution-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      }
+
+      .solution-column.optimized .solution-header {
+        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+      }
+
+      .solution-content {
+        padding: 20px;
+      }
+
+      .comparison-metrics {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .comparison-metric {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .comparison-metric-label {
+        font-size: 0.9em;
+        color: #6c757d;
+      }
+
+      .comparison-metric-value {
+        font-size: 1.2em;
+        font-weight: 700;
+        color: #333;
+      }
+
+      .comparison-plot {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 15px;
+      }
+
+      .comparison-plot img {
+        width: 100%;
+        height: auto;
+      }
+
+      .improvement-banner {
+        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 1.3em;
+        font-weight: 600;
+        display: none;
+      }
+
+      .improvement-banner.active {
+        display: block;
+      }
+
+      @media (max-width: 1024px) {
+        .content {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          border-right: none;
+          border-bottom: 2px solid #e9ecef;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Tối ưu hóa Phân vùng Giao hàng</h1>
+        <p>Hệ thống phân bổ tài xế và xe giao hàng thông minh</p>
+      </div>
+
+      <div class="content">
+        <div class="sidebar">
+          <h3 style="margin-bottom: 20px; color: #333">⚙️ Cấu hình hệ thống</h3>
+
+          <div class="info-box">
+            <p><strong>Lưu ý:</strong></p>
+            <p>• Số quận = min(tài xế, xe)</p>
+            <p>• Khuyến nghị: 50-1000 khu vực</p>
+          </div>
+
+          <form id="optimizeForm">
+            <div class="form-group">
+              <label for="num_areas">Số lượng khu vực:</label>
+              <input
+                type="number"
+                id="num_areas"
+                name="num_areas"
+                min="10"
+                max="2000"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="map_size">Kích thước bản đồ (100m):</label>
+              <input
+                type="number"
+                id="map_size"
+                name="map_size"
+                min="10"
+                max="300"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="num_fulltime_drivers">Tài xế Full-time:</label>
+              <input
+                type="number"
+                id="num_fulltime_drivers"
+                name="num_fulltime_drivers"
+                min="1"
+                max="100"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="num_parttime_drivers">Tài xế Part-time:</label>
+              <input
+                type="number"
+                id="num_parttime_drivers"
+                name="num_parttime_drivers"
+                min="0"
+                max="200"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="num_large_vehicles">Xe to (20kg):</label>
+              <input
+                type="number"
+                id="num_large_vehicles"
+                name="num_large_vehicles"
+                min="0"
+                max="200"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="num_medium_vehicles">Xe vừa (15kg):</label>
+              <input
+                type="number"
+                id="num_medium_vehicles"
+                name="num_medium_vehicles"
+                min="0"
+                max="200"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="num_small_vehicles">Xe nhỏ (10kg):</label>
+              <input
+                type="number"
+                id="num_small_vehicles"
+                name="num_small_vehicles"
+                min="0"
+                max="200"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="num_districts">Số quận:</label>
+              <input
+                type="number"
+                id="num_districts"
+                min="1"
+                max="200"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="num_sample_days">Số ngày mẫu (Sample Days T):</label>
+              <input
+                type="number"
+                id="num_sample_days"
+                name="num_sample_days"
+                min="1"
+                max="30"
+                value="5"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="algorithm">Thuật toán:</label>
+              <select id="algorithm" name="algorithm" required>
+                <option value="ls">Local Search</option>
+                <option value="vns">
+                  VNS(Chạy lâu)
+                </option>
+                <option value="ls_multi_swap">Local Search Multi-Swap</option>
+                <option value="vns_multi_swap">VNS Multi-Swap (Tối ưu)</option>
+                <option value="vns_overtime" selected>
+                  VNS Overtime Priority (Tối ưu)
+                </option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+              🚀 Chạy tối ưu hóa
+            </button>
+          </form>
+        </div>
+
+        <div class="main-content">
+          <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="color: #667eea; font-size: 1.2em; font-weight: 600">
+              Đang tối ưu hóa...
+            </p>
+            <p style="color: #6c757d; margin-top: 10px">
+              Vui lòng đợi trong giây lát
+            </p>
+          </div>
+
+          <div class="results" id="results">
+            <div class="result-header">
+              <h2 id="algorithmName">Kết quả tối ưu hóa</h2>
+            </div>
+
+            <div class="comparison-container" id="comparisonContainer">
+              <!-- Initial Solution -->
+              <div class="solution-column initial">
+                <div class="solution-header">Lời giải Ban đầu (Random)</div>
+                <div class="solution-content">
+                  <div class="comparison-metrics">
+                    <div class="comparison-metric">
+                      <span class="comparison-metric-label">Điểm số:</span>
+                      <span class="comparison-metric-value" id="initialScore"
+                        >-</span
+                      >
+                    </div>
+                    <div class="comparison-metric">
+                      <span class="comparison-metric-label"
+                        >Tổng bưu kiện:</span
+                      >
+                      <span class="comparison-metric-value" id="initialParcels"
+                        >-</span
+                      >
+                    </div>
+                    <div class="comparison-metric">
+                      <span class="comparison-metric-label">Bưu kiện/giờ:</span>
+                      <span
+                        class="comparison-metric-value"
+                        id="initialParcelsPerHour"
+                        >-</span
+                      >
+                    </div>
+                    <div class="comparison-metric">
+                      <span class="comparison-metric-label"
+                        >Tổng thời gian:</span
+                      >
+                      <span class="comparison-metric-value" id="initialTime"
+                        >-</span
+                      >
+                    </div>
+                  </div>
+                  <div class="comparison-plot">
+                    <img id="initialPlot" src="" alt="Lời giải ban đầu" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Initial Assignment Table -->
+              <div
+                class="table-container"
+                id="initialTableContainer"
+                style="display: none"
+              >
+                <h3 style="padding: 20px 20px 10px 20px; color: #333">
+                  Bảng phân công chi tiết - Lời giải Ban đầu
+                </h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Quận</th>
+                      <th>Tài xế</th>
+                      <th>Loại</th>
+                      <th>Xe</th>
+                      <th>Khu vực</th>
+                      <th>Tổng TG/Time</th>
+                      <th>Bưu kiện/h</th>
+                      <th>Trọng lượng</th>
+                      <th>Chuyến</th>
+                      <th>Tỷ lệ SD</th>
+                    </tr>
+                  </thead>
+                  <tbody id="initialAssignmentsTable"></tbody>
+                </table>
+              </div>
+
+              <!-- Loading for Optimized Solution -->
+              <div class="loading-secondary" id="loadingSecondary">
+                <div class="spinner"></div>
+                <p style="color: #667eea; font-size: 1.1em; font-weight: 600">
+                  Đang chạy thuật toán tối ưu hóa...
+                </p>
+                <p style="color: #6c757d; margin-top: 10px">
+                  Vui lòng đợi trong giây lát
+                </p>
+              </div>
+
+              <!-- Improvement Banner -->
+              <div class="improvement-banner" id="improvementBanner">
+                Cải thiện: <span id="improvementPercent">0</span>%
+              </div>
+
+              <!-- Optimized Solution -->
+              <div class="solution-column optimized">
+                <div class="solution-header" id="optimizedHeader">
+                  Lời giải Tối ưu
+                </div>
+                <div class="solution-content">
+                  <div class="comparison-metrics">
+                    <div class="comparison-metric">
+                      <span class="comparison-metric-label">Điểm số:</span>
+                      <span class="comparison-metric-value" id="optimizedScore"
+                        >-</span
+                      >
+                    </div>
+                    <div class="comparison-metric">
+                      <span class="comparison-metric-label"
+                        >Tổng bưu kiện:</span
+                      >
+                      <span
+                        class="comparison-metric-value"
+                        id="optimizedParcels"
+                        >-</span
+                      >
+                    </div>
+                    <div class="comparison-metric">
+                      <span class="comparison-metric-label">Bưu kiện/giờ:</span>
+                      <span
+                        class="comparison-metric-value"
+                        id="optimizedParcelsPerHour"
+                        >-</span
+                      >
+                    </div>
+                    <div class="comparison-metric">
+                      <span class="comparison-metric-label"
+                        >Tổng thời gian:</span
+                      >
+                      <span class="comparison-metric-value" id="optimizedTime"
+                        >-</span
+                      >
+                    </div>
+                  </div>
+                  <div class="comparison-plot">
+                    <img id="optimizedPlot" src="" alt="Lời giải tối ưu" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Optimized Assignment Table -->
+              <div
+                class="table-container"
+                id="optimizedTableContainer"
+                style="display: none"
+              >
+                <h3 style="padding: 20px 20px 10px 20px; color: #333">
+                  Bảng phân công chi tiết - Lời giải Tối ưu
+                </h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Quận</th>
+                      <th>Tài xế</th>
+                      <th>Loại</th>
+                      <th>Xe</th>
+                      <th>Khu vực</th>
+                      <th>Tổng TG/Time</th>
+                      <th>Bưu kiện/h</th>
+                      <th>Trọng lượng</th>
+                      <th>Chuyến</th>
+                      <th>Tỷ lệ SD</th>
+                    </tr>
+                  </thead>
+                  <tbody id="optimizedAssignmentsTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Auto calculate fields based on num_areas
+      document.getElementById("num_areas").addEventListener("input", (e) => {
+        const numAreas = parseInt(e.target.value) || 0;
+
+        if (numAreas > 0) {
+          // Tổng tài xế = (số khu vực / 20) làm tròn lên
+          // const totalDrivers = Math.ceil(numAreas / 30) + Math.floor(numAreas / 100);
+          var totalDrivers = 0;
+          if (numAreas <= 45) {
+            totalDrivers = 1;
+          } else if (numAreas <= 70) {
+            totalDrivers = 2;
+          } else if (numAreas <= 100) {
+            totalDrivers = 3;
+          } else if (numAreas <= 200) {
+            totalDrivers = Math.ceil(numAreas / 30) - 1;
+          } else if (numAreas <= 500) {
+            totalDrivers = Math.ceil(numAreas / 30);  
+          } else if (numAreas <= 700) {
+            totalDrivers = Math.ceil(numAreas / 30) +1 ;  
+          } else {
+            totalDrivers = Math.ceil(numAreas / 30) + 2;
+          }
+
+          const mapSize = Math.ceil(Math.sqrt(numAreas / 7) * 10);
+
+          // Số full-time = (tổng tài xế / 2 + 1) làm tròn lên
+          const fullTimeDrivers = Math.ceil(totalDrivers / 2);
+
+          // Số part-time = tổng tài xế - full-time
+          const partTimeDrivers = totalDrivers - fullTimeDrivers;
+
+          // Xe to = 60% số tài xế (làm tròn lên)
+          const largeVehicles = Math.ceil(totalDrivers * 0.6);
+
+          // Xe vừa = 20% số tài xế (làm tròn lên)
+          var mediumVehicles = 0;
+          if (totalDrivers >= 3) {
+            mediumVehicles = Math.ceil(totalDrivers * 0.2);
+          }
+
+          // Xe nhỏ = còn lại
+          const smallVehicles = totalDrivers - largeVehicles - mediumVehicles;
+
+          // Số quận = số tài xế
+          const numDistricts = totalDrivers;
+
+          // Cập nhật các trường
+
+          document.getElementById("map_size").value = mapSize;
+          document.getElementById("num_fulltime_drivers").value =
+            fullTimeDrivers;
+          document.getElementById("num_parttime_drivers").value = Math.max(
+            0,
+            partTimeDrivers
+          );
+          document.getElementById("num_large_vehicles").value = largeVehicles;
+          document.getElementById("num_medium_vehicles").value = mediumVehicles;
+          document.getElementById("num_small_vehicles").value = smallVehicles;
+          document.getElementById("num_districts").value = numDistricts;
+        }
+      });
+
+      document
+        .getElementById("optimizeForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const submitBtn = document.getElementById("submitBtn");
+          const loading = document.getElementById("loading");
+          const loadingSecondary = document.getElementById("loadingSecondary");
+          const results = document.getElementById("results");
+          const loadingText = document.querySelector(
+            "#loading p:first-of-type"
+          );
+          const improvementBanner =
+            document.getElementById("improvementBanner");
+
+          // Ẩn kết quả cũ và hiện loading
+          results.classList.remove("active");
+          loading.classList.add("active");
+          loadingSecondary.classList.remove("active");
+          improvementBanner.classList.remove("active");
+          submitBtn.disabled = true;
+
+          // Ẩn lời giải tối ưu ban đầu
+          document.querySelector(".solution-column.optimized").style.display =
+            "none";
+
+          // CLEAR BẢNG CŨ - Reset tất cả dữ liệu cũ
+          document.getElementById("initialAssignmentsTable").innerHTML = "";
+          document.getElementById("optimizedAssignmentsTable").innerHTML = "";
+          document.getElementById("initialTableContainer").style.display = "none";
+          document.getElementById("optimizedTableContainer").style.display = "none";
+          document.getElementById("initialScore").textContent = "-";
+          document.getElementById("optimizedScore").textContent = "-";
+
+          // Lấy dữ liệu từ form
+          const formData = {
+            num_areas: parseInt(document.getElementById("num_areas").value),
+            map_size: parseInt(document.getElementById("map_size").value),
+            num_fulltime_drivers: parseInt(
+              document.getElementById("num_fulltime_drivers").value
+            ),
+            num_parttime_drivers: parseInt(
+              document.getElementById("num_parttime_drivers").value
+            ),
+            num_large_vehicles: parseInt(
+              document.getElementById("num_large_vehicles").value
+            ),
+            num_medium_vehicles: parseInt(
+              document.getElementById("num_medium_vehicles").value
+            ),
+            num_small_vehicles: parseInt(
+              document.getElementById("num_small_vehicles").value
+            ),
+            num_districts: parseInt(
+              document.getElementById("num_districts").value
+            ),
+            num_sample_days: parseInt(
+              document.getElementById("num_sample_days").value
+            ),
+            algorithm: document.getElementById("algorithm").value,
+          };
+
+          try {
+            // Bước 1: Gọi API với thuật toán Random để lấy lời giải ban đầu
+            loadingText.textContent = "Đang tạo lời giải ban đầu...";
+            const initialFormData = { ...formData, algorithm: "random" };
+
+            const initialResponse = await fetch(
+              "http://localhost:8000/optimize",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(initialFormData),
+              }
+            );
+
+            if (!initialResponse.ok) {
+              const error = await initialResponse.json();
+              throw new Error(
+                error.detail || "Có lỗi xảy ra khi tạo lời giải ban đầu"
+              );
+            }
+
+            const initialData = await initialResponse.json();
+
+            // Hiển thị lời giải ban đầu trước
+            loading.classList.remove("active");
+            results.classList.add("active");
+            displayInitialSolution(initialData);
+
+            // Hiển thị loading cho lời giải tối ưu
+            loadingSecondary.classList.add("active");
+
+            // Scroll để người dùng thấy loading
+            loadingSecondary.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+
+            // Bước 2: Gọi API với thuật toán đã chọn để tối ưu hóa
+            // BẮT ĐẦU TIMER
+            const startTime = performance.now();
+            
+            const optimizedResponse = await fetch(
+              "http://localhost:8000/optimize",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+              }
+            );
+
+            // KẾT THÚC TIMER
+            const endTime = performance.now();
+            const executionTime = ((endTime - startTime) / 1000).toFixed(2);
+
+            if (!optimizedResponse.ok) {
+              const error = await optimizedResponse.json();
+              throw new Error(error.detail || "Có lỗi xảy ra khi tối ưu hóa");
+            }
+
+            const optimizedData = await optimizedResponse.json();
+
+            // Ẩn loading thứ hai và hiển thị kết quả tối ưu
+            loadingSecondary.classList.remove("active");
+            displayOptimizedSolution(initialData, optimizedData, executionTime);
+          } catch (error) {
+            alert("Lỗi: " + error.message);
+            loading.classList.remove("active");
+            loadingSecondary.classList.remove("active");
+          } finally {
+            loadingText.textContent = "Đang tối ưu hóa...";
+            submitBtn.disabled = false;
+          }
+        });
+
+      function displayInitialSolution(initialData) {
+        // Cập nhật header
+        document.getElementById(
+          "algorithmName"
+        ).textContent = `Bước 1: Lời giải Ban đầu (Random)`;
+
+        // Hiển thị lời giải ban đầu (initial solution)
+        document.getElementById("initialScore").textContent =
+          initialData.score.toFixed(4);
+        document.getElementById("initialParcels").textContent =
+          initialData.summary.total_parcels;
+        document.getElementById("initialParcelsPerHour").textContent =
+          initialData.summary.parcels_per_hour.toFixed(1) + " pcs/h";
+        document.getElementById("initialTime").textContent =
+          initialData.summary.total_time.toFixed(2) + " h";
+        document.getElementById("initialPlot").src =
+          "data:image/png;base64," + initialData.plot_base64;
+
+        // Hiển thị bảng phân công ban đầu
+        const initialTableContainer = document.getElementById(
+          "initialTableContainer"
+        );
+        initialTableContainer.style.display = "block";
+
+        const initialTbody = document.getElementById("initialAssignmentsTable");
+        initialTbody.innerHTML = "";
+
+        initialData.assignments.forEach((assign) => {
+          const row = document.createElement("tr");
+          const timeClass = assign.overtime ? "overtime" : "ok";
+          const timeWarning = assign.overtime ? " ⚠️" : "";
+
+          row.innerHTML = `
+            <td>${assign.district}</td>
+            <td>${assign.driver_name}</td>
+            <td>${assign.driver_type}</td>
+            <td>${assign.vehicle_type}</td>
+            <td>${assign.area_count}</td>
+            <td class="${timeClass}">${assign.total_time.toFixed(
+            2
+          )}/${assign.work_time.toFixed(1)}h${timeWarning}</td>
+            <td>${assign.parcels_per_hour.toFixed(1)} pcs/h</td>
+            <td>${assign.weight.toFixed(1)}/${assign.vehicle_capacity} kg</td>
+            <td>${assign.num_trips}x</td>
+            <td>${assign.utilization_rate.toFixed(1)}%</td>
+          `;
+          initialTbody.appendChild(row);
+        });
+
+        // Thêm dòng tổng cộng
+        const initialSummaryRow = document.createElement("tr");
+        initialSummaryRow.className = "summary-row";
+        initialSummaryRow.innerHTML = `
+          <td colspan="4"><strong>TỔNG CỘNG</strong></td>
+          <td><strong>${initialData.assignments.reduce(
+            (sum, a) => sum + a.area_count,
+            0
+          )}</strong></td>
+          <td><strong>${initialData.summary.total_time.toFixed(
+            2
+          )}h</strong></td>
+          <td><strong>${initialData.summary.parcels_per_hour.toFixed(
+            1
+          )} pcs/h</strong></td>
+          <td><strong>${initialData.summary.total_weight.toFixed(
+            1
+          )} kg</strong></td>
+          <td colspan="2"></td>
+        `;
+        initialTbody.appendChild(initialSummaryRow);
+      }
+
+      function displayOptimizedSolution(initialData, optimizedData, executionTime) {
+        // Cập nhật header với thời gian chạy
+        document.getElementById(
+          "algorithmName"
+        ).textContent = `Kết quả tối ưu hóa: ${optimizedData.algorithm_name} (⏱️ ${executionTime}s)`;
+
+        // Tính % cải thiện và hiển thị banner
+        const improvement =
+          ((initialData.score - optimizedData.score) / initialData.score) * 100;
+        document.getElementById("improvementPercent").textContent =
+          improvement.toFixed(1);
+        document.getElementById("improvementBanner").classList.add("active");
+
+        // Hiển thị lời giải tối ưu (optimized solution)
+        document.querySelector(".solution-column.optimized").style.display =
+          "block";
+        document.getElementById(
+          "optimizedHeader"
+        ).textContent = `Lời giải Tối ưu (${optimizedData.algorithm_name}) - ⏱️ ${executionTime}s`;
+        document.getElementById("optimizedScore").textContent =
+          optimizedData.score.toFixed(4);
+        document.getElementById("optimizedParcels").textContent =
+          optimizedData.summary.total_parcels;
+        document.getElementById("optimizedParcelsPerHour").textContent =
+          optimizedData.summary.parcels_per_hour.toFixed(1) + " pcs/h";
+        document.getElementById("optimizedTime").textContent =
+          optimizedData.summary.total_time.toFixed(2) + " h";
+        document.getElementById("optimizedPlot").src =
+          "data:image/png;base64," + optimizedData.plot_base64;
+
+        // Hiển thị bảng phân công tối ưu
+        const optimizedTableContainer = document.getElementById(
+          "optimizedTableContainer"
+        );
+        optimizedTableContainer.style.display = "block";
+
+        const tbody = document.getElementById("optimizedAssignmentsTable");
+        tbody.innerHTML = "";
+
+        optimizedData.assignments.forEach((assign) => {
+          const row = document.createElement("tr");
+          const timeClass = assign.overtime ? "overtime" : "ok";
+          const timeWarning = assign.overtime ? " ⚠️" : "";
+
+          row.innerHTML = `
+                    <td>${assign.district}</td>
+                    <td>${assign.driver_name}</td>
+                    <td>${assign.driver_type}</td>
+                    <td>${assign.vehicle_type}</td>
+                    <td>${assign.area_count}</td>
+                    <td class="${timeClass}">${assign.total_time.toFixed(
+            2
+          )}/${assign.work_time.toFixed(1)}h${timeWarning}</td>
+                    <td>${assign.parcels_per_hour.toFixed(1)} pcs/h</td>
+                    <td>${assign.weight.toFixed(1)}/${
+            assign.vehicle_capacity
+          } kg</td>
+                    <td>${assign.num_trips}x</td>
+                    <td>${assign.utilization_rate.toFixed(1)}%</td>
+                `;
+          tbody.appendChild(row);
+        });
+
+        // Thêm dòng tổng cộng
+        const summaryRow = document.createElement("tr");
+        summaryRow.className = "summary-row";
+        summaryRow.innerHTML = `
+                <td colspan="4"><strong>TỔNG CỘNG</strong></td>
+                <td><strong>${optimizedData.assignments.reduce(
+                  (sum, a) => sum + a.area_count,
+                  0
+                )}</strong></td>
+                <td><strong>${optimizedData.summary.total_time.toFixed(
+                  2
+                )}h</strong></td>
+                <td><strong>${optimizedData.summary.parcels_per_hour.toFixed(
+                  1
+                )} pcs/h</strong></td>
+                <td><strong>${optimizedData.summary.total_weight.toFixed(
+                  1
+                )} kg</strong></td>
+                <td colspan="2"></td>
+            `;
+        tbody.appendChild(summaryRow);
+
+        // Scroll xuống lời giải tối ưu
+        document
+          .querySelector(".solution-column.optimized")
+          .scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    </script>
+  </body>
+</html>
