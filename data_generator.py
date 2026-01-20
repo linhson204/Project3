@@ -6,14 +6,7 @@ import random
 from models import T_MAX, NUM_SAMPLE_DAYS, SERVICE_TIME_PER_PARCEL
 
 def generate_areas(num_areas: int, map_size: int, num_sample_days: int = NUM_SAMPLE_DAYS) -> list:
-    """
-    Tạo danh sách basic areas B với demand data cho tập sample days T.
-    
-    Theo đề bài:
-    - Mỗi basic area b ∈ B đại diện cho một vùng địa lý
-    - Demand data cho tập T = {0,...,|T|-1} ngày mẫu
-    - Mỗi order o có: weight l_o, service time s_o, delivery day τ_o
-    """
+    """ Tạo danh sách basic areas B với demand data cho tập sample days T. """
     areas = []
     random.seed(42)
     

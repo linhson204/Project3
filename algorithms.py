@@ -17,19 +17,19 @@ from district_utils import (
 
 def get_adaptive_params(num_areas):
     if num_areas <= 100:
-        return {'max_iter': 5, 'k_max': 6, 'ls_iter': 200, 'boundary_limit': 200}
+        return {'max_iter': 5, 'k_max': 6, 'ls_iter': 100, 'boundary_limit': 100}
     elif num_areas <= 200:
-        return {'max_iter': 4, 'k_max': 5, 'ls_iter': 200, 'boundary_limit': 200}
+        return {'max_iter': 4, 'k_max': 5, 'ls_iter': 120, 'boundary_limit': 120}
     elif num_areas <= 300:
-        return {'max_iter': 3, 'k_max': 5, 'ls_iter': 200, 'boundary_limit': 200}
+        return {'max_iter': 3, 'k_max': 5, 'ls_iter': 140, 'boundary_limit': 140}
     elif num_areas <= 500:
-        return {'max_iter': 3, 'k_max': 5, 'ls_iter': 200, 'boundary_limit': 200}
+        return {'max_iter': 3, 'k_max': 5, 'ls_iter': 160, 'boundary_limit': 160}
     elif num_areas <= 800:
-        return {'max_iter': 2, 'k_max': 5, 'ls_iter': 200, 'boundary_limit': 200}
+        return {'max_iter': 2, 'k_max': 5, 'ls_iter': 160, 'boundary_limit': 160}
     elif num_areas <= 1000:
-        return {'max_iter': 2, 'k_max': 5, 'ls_iter': 200, 'boundary_limit': 200}
+        return {'max_iter': 2, 'k_max': 5, 'ls_iter': 170, 'boundary_limit': 170}
     else:  # > 1000
-        return {'max_iter': 2, 'k_max': 5, 'ls_iter': 200, 'boundary_limit': 200}
+        return {'max_iter': 2, 'k_max': 5, 'ls_iter': 180, 'boundary_limit': 180}
 
 # =============================================================================
 # OPTIMIZED CACHING 
@@ -170,7 +170,7 @@ def generate_initial_solution(num_areas, num_districts, areas):
 
 def local_search(solution, areas, num_districts, drivers, vehicles, depot, map_size, 
                  use_contiguity=True, graph=None, area_positions=None, max_iter=None):
-    """Local Search tập trung vào boundary areas - OPTIMIZED"""
+    """Local Search tập trung vào boundary areas"""
     num_areas = len(areas)
     params = get_adaptive_params(num_areas)
     
@@ -192,7 +192,7 @@ def local_search(solution, areas, num_districts, drivers, vehicles, depot, map_s
     for iteration in range(max_iter):
         improved = False
         
-        # Tìm boundary areas (LIMIT số lượng)
+        # Tìm boundary areas 
         boundary = []
         if graph:
             for idx in range(num_areas):
@@ -367,7 +367,7 @@ def shake(solution, k, num_districts):
         if not areas_in_dist:
             continue
         
-        num_move = max(1, int(len(areas_in_dist) * 0.15))  # Giảm từ 0.2 xuống 0.15
+        num_move = max(1, int(len(areas_in_dist) * 0.15)) 
         to_move = random.sample(areas_in_dist, min(num_move, len(areas_in_dist)))
         
         for idx in to_move:
@@ -380,7 +380,7 @@ def shake(solution, k, num_districts):
 
 
 def vns(solution, areas, num_districts, drivers, vehicles, depot, map_size, max_iter=None, k_max=None, use_contiguity=True):
-    """Variable Neighborhood Search - OPTIMIZED"""
+    """Variable Neighborhood Search"""
     params = get_adaptive_params(len(areas))
     if max_iter is None:
         max_iter = params['max_iter']
@@ -504,13 +504,23 @@ def shake_overtime(solution, k, areas, overtime_dists, undertime_dists, graph, t
     """Shake ưu tiên chuyển từ overtime sang undertime districts lân cận"""
     new_sol = list(solution)
     targets = random.sample(overtime_dists, min(k, len(overtime_dists)))
-    
+
     for dist in targets:
         dist_areas = [i for i, d in enumerate(solution) if d == dist]
         if not dist_areas:
             continue
         
-        num_move = max(1, int(len(dist_areas) * 0.15))  # Giảm từ 0.2 xuống 0.15
+        # Tính num_move dựa trên mức độ overtime
+        actual_time = times[dist]
+        overtime_ratio = (actual_time - T_MAX) / actual_time if actual_time > T_MAX else 0
+        
+        # Số areas cần chuyển tỷ lệ với overtime_ratio
+        # Tối thiểu 1, tối đa 50% số areas của district
+        num_move = max(1, min(
+            math.ceil(len(dist_areas) * overtime_ratio * 1.15),  # Nhân 1.15 để chắc chắn giảm đủ
+            len(dist_areas) // 2  # Không chuyển quá nửa
+        ))
+        
         sorted_areas = sorted(dist_areas, key=lambda i: areas[i]['service_time'], reverse=True)
         
         for idx in sorted_areas[:num_move]:

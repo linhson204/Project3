@@ -1,0 +1,39 @@
+[
+  {
+    "num_areas": 1200,
+    "num_districts": 42,
+    "map_size": 131,
+    "drivers": {
+      "fulltime": 21,
+      "parttime": 21
+    },
+    "vehicles": {
+      "large": 26,
+      "medium": 9,
+      "small": 7
+    },
+    "initial_score": 6660.791758242512,
+    "algorithms": {
+      "local_search": {
+        "score": 2512.4070676441866,
+        "time": 2.03,
+        "improvement": 62.3
+      },
+      "ls_multi_swap": {
+        "score": 2376.805080109139,
+        "time": 1.31,
+        "improvement": 64.3
+      },
+      "vns_multi_swap": {
+        "score": 0.02759176251400605,
+        "time": 117.24,
+        "improvement": 100.0
+      },
+      "vns_overtime": {
+        "score": 0.03288101476820671,
+        "time": 67.75,
+        "improvement": 100.0
+      }
+    }
+  }
+]
